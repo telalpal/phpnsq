@@ -4,7 +4,7 @@ namespace OkStuff\PhpNsq\Tunnel;
 
 class Pool
 {
-    private $pool = [];
+    private static $pool = [];
 
     public function __construct($nsq)
     {
@@ -18,13 +18,13 @@ class Pool
 
     public function addTunnel(Tunnel $tunnel)
     {
-        array_push($this->pool, $tunnel);
+        static::$pool[$tunnel->getConfig()->get('host') . ':' . $tunnel->getConfig()->get('port')] = $tunnel;
 
         return $this;
     }
 
     public function getTunnel()
     {
-        return $this->pool[array_rand($this->pool)];
+        return static::$pool[array_rand(static::$pool)];
     }
 }
