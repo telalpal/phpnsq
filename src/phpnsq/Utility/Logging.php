@@ -18,8 +18,8 @@ class Logging
         $this->handler = new Logger($name);
         $this->dirname = $dirname;
 
-        $this->handler->pushHandler((new StreamHandler($this->getLogFile()))->setFormatter(new HtmlFormatter()));
-        $this->handler->pushHandler((new StreamHandler("php://stdout"))->setFormatter(new CustomerLineFormatter(true)));
+//         $this->handler->pushHandler((new StreamHandler($this->getLogFile()))->setFormatter(new HtmlFormatter()));
+//         $this->handler->pushHandler((new StreamHandler("php://stdout"))->setFormatter(new CustomerLineFormatter(true)));
     }
 
     public function getHandler()
