@@ -25,7 +25,7 @@ class Subscribe extends Base
         $phpnsq->setTopic($input->getArgument("topic"))
             ->setChannel($input->getArgument("channel"))
             ->subscribe($this, function (Message $message) use ($phpnsq, $output) {
-                $phpnsq->getLogger()->info("READ", $message);
+                $output->writeln("READ" . " " . $message);
             });
         $this->addPeriodicTimer(5, function () use ($output) {
             $memory    = memory_get_usage() / 1024;

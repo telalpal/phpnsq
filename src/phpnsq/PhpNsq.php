@@ -7,28 +7,32 @@ use Exception;
 use OkStuff\PhpNsq\Command\Base as SubscribeCommand;
 use OkStuff\PhpNsq\Tunnel\Pool;
 use OkStuff\PhpNsq\Tunnel\Tunnel;
-use OkStuff\PhpNsq\Utility\Logging;
 use OkStuff\PhpNsq\Wire\Reader;
 use OkStuff\PhpNsq\Wire\Writer;
 
 class PhpNsq
 {
     private $pool;
-    private $logger;
     private $channel;
     private $topic;
     private $reader;
 
+    const LOG_ERROR = 'ERROR';
+    const LOG_INFO = 'INFO';
+
     public function __construct($nsq)
     {
         $this->reader = new reader();
-        $this->logger = new Logging("PHPNSQ", $nsq["nsq"]["logdir"]);
         $this->pool   = new Pool($nsq);
     }
 
-    public function getLogger()
+    private function log($message, $exception=null, $level=self::LOG_ERROR)
     {
-        return $this->logger;
+        error_log("PHPNSQ.$level $message:");
+        if ($exception)
+        {
+            error_log($exception);
+        }
     }
 
     public function setChannel($channel)
@@ -51,7 +55,7 @@ class PhpNsq
             $tunnel = $this->pool->getTunnel();
             $tunnel->write(Writer::pub($this->topic, $message));
         } catch (Exception $e) {
-            $this->logger->error("publish error", $e);
+            $this->log('publish error', $e);
         }
     }
 
@@ -61,7 +65,7 @@ class PhpNsq
             $tunnel = $this->pool->getTunnel();
             $tunnel->write(Writer::mpub($this->topic, $bodies));
         } catch (Exception $e) {
-            $this->logger->error("publish error", $e);
+            $this->log('publish error', $e);
         }
     }
 
@@ -71,7 +75,7 @@ class PhpNsq
             $tunnel = $this->pool->getTunnel();
             $tunnel->write(Writer::dpub($this->topic, $deferTime, $message));
         } catch (Exception $e) {
-            $this->logger->error("publish error", $e);
+            $this->log('publish error', $e);
         }
     }
 
@@ -87,7 +91,7 @@ class PhpNsq
 
             $tunnel->write(Writer::sub($this->topic, $this->channel))->write(Writer::rdy(1));
         } catch (Exception $e) {
-            $this->logger->error("subscribe error", $e);
+            $this->log('subscribe error', $e);
         }
     }
 
@@ -103,7 +107,7 @@ class PhpNsq
             try {
                 call_user_func($callback, $msg);
             } catch (Exception $e) {
-                $this->logger->error("Will be requeued: ", $e->getMessage());
+                $this->log('Will be requeued', $e->getMessage());
 
                 $tunnel->write(Writer::touch($msg->getId()))
                     ->write(Writer::req(
@@ -115,9 +119,9 @@ class PhpNsq
             $tunnel->write(Writer::fin($msg->getId()))
                 ->write(Writer::rdy(1));
         } elseif ($reader->isOk()) {
-            $this->logger->info('Ignoring "OK" frame in SUB loop');
+            $this->log('Ignoring "OK" frame in SUB loop', null, self::LOG_INFO);
         } else {
-            $this->logger->error("Error/unexpected frame received: ", $reader);
+            $this->log("Error/unexpected frame received", $reader);
         }
     }
 }
